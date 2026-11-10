@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>What Are You Wearing?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@700;800&display=swap">
+<style>
+/* Layout: sticky 4-tab bar over one big play area. Pictures sit in a 3x3 grid on white panels, word chips in a tray underneath. */
+:root{
+  --bg:#E6F1FF; --surface:#FFFFFF; --ink:#16264A; --muted:#4A5C82; --line:#B4CAEE;
+  --accent:#FFB800; --accent-dark:#C98F00; --accent-ink:#2B1E00;
+  --blue:#2E6BFF; --good:#1F9D5B; --good-bg:#DDF6E8; --bad:#E5484D;
+  --pic:#FFFFFF; --tray:#CFE2FF; --shadow:rgba(22,38,74,.22);
+  --font-display:'Baloo 2','Arial Rounded MT Bold','Trebuchet MS',sans-serif;
+  --font-body:'Nunito','Trebuchet MS',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1A36; --surface:#18284F; --ink:#F2F6FF; --muted:#A9B9DD; --line:#2E4379;
+    --accent:#FFC933; --accent-dark:#8A6200; --accent-ink:#2B1E00;
+    --blue:#7BA3FF; --good:#4ADE92; --good-bg:#12392B; --bad:#FF7A7F;
+    --pic:#F7FAFF; --tray:#122244; --shadow:rgba(0,0,0,.45);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1A36; --surface:#18284F; --ink:#F2F6FF; --muted:#A9B9DD; --line:#2E4379;
+  --accent:#FFC933; --accent-dark:#8A6200; --accent-ink:#2B1E00;
+  --blue:#7BA3FF; --good:#4ADE92; --good-bg:#12392B; --bad:#FF7A7F;
+  --pic:#F7FAFF; --tray:#122244; --shadow:rgba(0,0,0,.45);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+html{font-size:clamp(16px,min(1.35vw,2.3vh),38px)} /* keep-px */
+:root{--vh:100vh}
+@supports (height:100dvh){:root{--vh:100dvh}}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:var(--font-body); font-weight:800; font-size:1.125rem; line-height:1.3;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0.625rem 3.5rem;
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:none;margin:0 auto}
+:focus-visible{outline:0.25rem solid var(--blue);outline-offset:0.1875rem}
+button{font-family:inherit;color:inherit}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--bg);display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"h s" "t t";align-items:center;gap:8px 12px;padding:8px 0 12px}
+header.top h1{grid-area:h}
+header.top .score{grid-area:s}
+h1{font-family:var(--font-display);font-weight:800;font-size:clamp(1.875rem,7vw,3.375rem);line-height:1;margin:0;text-wrap:balance}
+.score{display:flex;align-items:center;gap:0.375rem;background:var(--surface);border:0.1875rem solid var(--line);border-radius:62.4375rem;padding:0.25rem 0.875rem 0.25rem 0.625rem;font-family:var(--font-display);font-size:1.75rem;line-height:1.2;font-variant-numeric:tabular-nums;flex:none}
+.score svg{width:1.875rem;height:1.875rem}
+.star-fill{fill:var(--accent);stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+
+nav.tabs{grid-area:t;display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem}
+.tab{font-family:var(--font-display);font-weight:800;font-size:clamp(1.0625rem,4.6vw,1.75rem);line-height:1.1;padding:0.625rem 0.25rem;border-radius:1rem;border:0.1875rem solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;box-shadow:0 0.25rem 0 var(--line)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent-dark);box-shadow:0 0.25rem 0 var(--accent-dark)}
+
+.hint{font-family:var(--font-display);font-size:clamp(1.25rem,4.6vw,1.875rem);line-height:1.15;margin:0.25rem 0 0.75rem;text-align:center;text-wrap:balance}
+
+/* pictures */
+.pic{background:var(--pic);border-radius:1.125rem;padding:6%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;max-width:100%}
+.art{width:100%;height:100%;display:block}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(0.5rem,2vw,1.125rem)}
+
+/* match */
+.slot{background:var(--surface);border:0.25rem dashed var(--line);border-radius:1.5rem;padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem;min-width:0;transition:transform .12s,border-color .12s}
+.slot.hot,.zone.hot,.blank.hot{border-color:var(--accent);transform:scale(1.03)}
+.slot.filled{border:0.25rem solid var(--good);background:var(--good-bg)}
+.slotword{font-family:var(--font-display);font-size:clamp(1.125rem,4.8vw,2rem);text-align:center;min-height:1.5em;line-height:1.2;overflow-wrap:anywhere}
+.slot:not(.filled) .slotword{color:var(--muted)}
+.tray{margin-top:1.125rem;background:var(--tray);border-radius:1.625rem;padding:1rem 0.75rem;display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;min-height:5.25rem}
+.chip{font-family:var(--font-display);font-weight:800;font-size:clamp(1.375rem,5.6vw,2.25rem);line-height:1.1;background:var(--surface);color:var(--ink);border:0.25rem solid var(--blue);border-radius:1.125rem;padding:0.5rem 1.25rem;cursor:grab;box-shadow:0 0.3125rem 0 var(--blue);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.chip.pr{border-color:var(--good);box-shadow:0 0.3125rem 0 var(--good)}
+.chip.selected,.pchip.selected{background:var(--accent);color:var(--accent-ink);border-color:var(--accent-dark)}
+.chip.used,.pchip.used{display:none}
+.chip.dragging,.pchip.dragging{opacity:.3}
+.ghost{position:fixed;left:0;top:0;margin:0;z-index:200;pointer-events:none;box-shadow:0 0.875rem 1.75rem var(--shadow);transition:none}
+.status{font-family:var(--font-display);font-size:1.75rem;text-align:center;margin:0.875rem 0 0;font-variant-numeric:tabular-nums}
+
+/* read & drag */
+.dots{display:flex;gap:0.5rem;justify-content:center;margin:0.125rem 0 0.625rem}
+.dot{width:1rem;height:1rem;border-radius:50%;background:var(--line)}
+.dot.done{background:var(--good)}
+.dot.cur{background:var(--accent);box-shadow:0 0 0 0.1875rem var(--ink)}
+.sbox{background:var(--surface);border:0.25rem solid var(--line);border-radius:1.625rem;padding:1.125rem 1rem;display:flex;flex-direction:column;align-items:center;gap:0.75rem}
+.sentence{font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,8.4vw,3.75rem);line-height:1.12;margin:0;text-align:center;text-wrap:balance}
+.pron{color:var(--blue)}
+.hl{background:linear-gradient(transparent 62%,var(--accent) 62%);padding:0 .08em}
+.listen{display:inline-flex;align-items:center;gap:0.5rem;font-family:var(--font-display);font-weight:800;font-size:1.375rem;background:var(--blue);color:#fff;border:0;border-radius:62.4375rem;padding:0.375rem 1.125rem 0.375rem 0.875rem;cursor:pointer;box-shadow:0 0.25rem 0 rgba(0,0,0,.25)}
+:root[data-theme="dark"] .listen{color:#0E1A36}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .listen{color:#0E1A36}}
+.listen svg{width:1.625rem;height:1.625rem}
+.zone{margin:1rem auto 0;width:min(100%,18.75rem);border:0.3125rem dashed var(--line);border-radius:1.625rem;background:var(--surface);min-height:11.875rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.375rem;padding:0.625rem;transition:transform .12s,border-color .12s}
+.zone .zhint{font-family:var(--font-display);font-size:1.5rem;color:var(--muted);text-align:center}
+.zone.filled{border:0.3125rem solid var(--good);background:var(--good-bg)}
+.zone .pic{width:min(100%,9.375rem)}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;margin-top:1rem}
+@media (min-width:600px){.choices{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pchip{background:var(--pic);border:0.25rem solid var(--blue);border-radius:1.375rem;padding:0.625rem;cursor:grab;box-shadow:0 0.3125rem 0 var(--blue);touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;aspect-ratio:1;display:flex;align-items:center;justify-content:center}
+.pchip .art{pointer-events:none}
+.actions{display:flex;justify-content:center;margin-top:1.125rem;min-height:4rem}
+.btn{font-family:var(--font-display);font-weight:800;font-size:1.875rem;line-height:1.1;background:var(--accent);color:var(--accent-ink);border:0;border-radius:62.4375rem;padding:0.75rem 2.25rem;cursor:pointer;box-shadow:0 0.375rem 0 var(--accent-dark)}
+.btn:active{transform:translateY(0.1875rem);box-shadow:0 0.1875rem 0 var(--accent-dark)}
+
+/* build */
+.scene{display:flex;align-items:center;justify-content:center;gap:clamp(0.625rem,3vw,1.75rem);background:var(--surface);border:0.25rem solid var(--line);border-radius:1.625rem;padding:0.875rem 0.75rem;flex-wrap:wrap}
+.people{display:flex;flex-direction:column;align-items:center;gap:0.375rem}
+.kids{display:flex;gap:0.25rem;align-items:flex-end}
+.kid{height:clamp(6rem,24vw,9.375rem);width:auto}
+.who{margin:0;font-family:var(--font-display);font-size:clamp(1.0625rem,4vw,1.5rem);color:var(--muted);text-align:center}
+.scene .pic{width:clamp(6.875rem,28vw,10.625rem)}
+.scene .arrow{width:clamp(2.125rem,8vw,3.5rem);height:auto;color:var(--ink)}
+.frame{display:flex;flex-wrap:wrap;gap:0.625rem 0.75rem;align-items:center;justify-content:center;margin:1.125rem 0 0.25rem;font-family:var(--font-display);font-size:clamp(1.75rem,7.4vw,3.25rem);line-height:1.1}
+.frame .w{font-weight:800}
+.blank{min-width:clamp(8.125rem,30vw,13.125rem);min-height:1.5em;border:0.25rem dashed var(--line);border-radius:1.125rem;background:var(--surface);text-align:center;padding:0.125rem 0.75rem;transition:transform .12s,border-color .12s}
+.blank.filled{border:0.25rem solid var(--good);background:var(--good-bg)}
+.blank[data-kind="pron"].filled{color:var(--blue)}
+.tray .sep{flex-basis:100%;height:0}
+
+/* finish */
+.done{margin:1.125rem auto 0;max-width:32.5rem;text-align:center;background:var(--surface);border:0.25rem solid var(--good);border-radius:1.75rem;padding:1.375rem 1rem;display:flex;flex-direction:column;align-items:center;gap:0.75rem}
+.bigstars{display:flex;gap:0.375rem}
+.bs{width:clamp(3.5rem,15vw,5.25rem);height:auto}
+.bs .star-fill{fill:var(--line)}
+.bs.on .star-fill{fill:var(--accent)}
+.donetxt{font-family:var(--font-display);font-size:clamp(1.625rem,6vw,2.375rem);line-height:1.1;margin:0;text-wrap:balance}
+
+/* learn */
+.rule{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+@media (max-width:560px){.rule{grid-template-columns:1fr}}
+.rule-col{background:var(--surface);border:0.25rem solid var(--line);border-radius:1.5rem;padding:0.75rem;display:flex;align-items:center;gap:0.75rem;min-width:0}
+.rule-col .kids .kid{height:5.75rem}
+.rule-col p{margin:0}
+.rule-s{font-family:var(--font-display);font-size:clamp(1.5rem,5.6vw,2.125rem);line-height:1.1}
+.rule-n{font-size:clamp(1rem,3.6vw,1.1875rem);color:var(--muted);margin-top:0.25rem !important;font-weight:700}
+.arts{display:grid;grid-template-columns:auto 1fr;gap:0.5rem 0.625rem;align-items:center;margin:0.75rem 0;font-size:clamp(1.125rem,4.2vw,1.5rem)}
+.tag{font-family:var(--font-display);background:var(--good);color:#fff;border-radius:62.4375rem;padding:0 0.875rem;text-align:center;line-height:1.5}
+:root[data-theme="dark"] .tag{color:#0E1A36}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tag{color:#0E1A36}}
+.tag.no{background:var(--bad)}
+:root[data-theme="dark"] .tag.no{color:#2B0A0C}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tag.no{color:#2B0A0C}}
+.stage{display:grid;grid-template-columns:minmax(0,16.25rem) 1fr;gap:1rem;align-items:center;background:var(--surface);border:0.25rem solid var(--line);border-radius:1.75rem;padding:0.875rem;margin-bottom:0.875rem}
+@media (max-width:560px){.stage{grid-template-columns:1fr;justify-items:center}}
+.stage .pic{width:100%;max-width:16.25rem;border:0.1875rem solid var(--line)}
+.lines{display:flex;flex-direction:column;gap:0.625rem;min-width:0;width:100%}
+.bigword{font-family:var(--font-display);font-size:clamp(2.5rem,10vw,4.5rem);line-height:1;margin:0;text-align:center}
+.line{display:flex;flex-direction:column;align-items:center;gap:0.375rem;border-top:0.1875rem dashed var(--line);padding-top:0.625rem}
+.line .sentence{font-size:clamp(1.625rem,6vw,2.625rem)}
+.thumb{background:var(--surface);border:0.25rem solid var(--line);border-radius:1.375rem;padding:0.5rem;cursor:pointer;display:flex;flex-direction:column;gap:0.375rem;min-width:0}
+.thumb[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.tword{font-family:var(--font-display);font-size:clamp(1.125rem,4.8vw,1.875rem);line-height:1.15;text-align:center;overflow-wrap:anywhere}
+
+/* layout wrappers: stacked on portrait screens */
+.mlay,.blay,.bleft,.bright,.llay,.lleft{display:block}
+.rlay{display:flex;flex-direction:column}
+.rleft{display:contents}
+.rlay .sbox{order:0}.rlay .zone{order:1}.rlay .choices{order:2}.rlay .actions{order:3}
+.status{grid-column:1/-1}
+
+/* wide screens (smartboards, laptops): fill the whole screen, sized from its height so nothing needs scrolling */
+@media (min-width:900px) and (min-aspect-ratio:5/4){
+  body{padding-block:.4rem .8rem}
+  header.top{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"h t s";gap:.6rem 1.6rem;padding:.2rem 0 .7rem}
+  h1{font-size:2.3rem;white-space:nowrap}
+  nav.tabs{grid-template-columns:repeat(4,minmax(0,10rem));justify-content:center}
+  .tab{font-size:1.5rem;padding:.3rem .2rem}
+  .score{font-size:1.9rem}
+  .hint{font-size:1.5rem;margin:0 0 .6rem}
+
+  .mlay .grid3{grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:calc((var(--vh) - 18rem) / 2)}
+  .mlay .slot{position:relative;padding:.4rem;min-height:0}
+  .mlay .slot .pic{flex:1;min-height:0;aspect-ratio:auto;padding:3%}
+  .mlay .slotword{position:absolute;left:.7rem;right:.7rem;bottom:.7rem;min-height:0;font-size:1.7rem;background:var(--surface);border-radius:.7rem;padding:.1rem .3rem;border:.2rem solid var(--good)}
+  .mlay .slot:not(.filled) .slotword{display:none}
+  .mlay .status{grid-column:auto;align-self:center;margin:0;font-size:2.2rem}
+  .mlay .tray{margin-top:.9rem;min-height:0;padding:.7rem}
+  .mlay .chip{font-size:1.7rem;padding:.25rem 1rem}
+
+  .rlay{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.4rem;align-items:start}
+  .rleft{display:block}
+  .rlay .sbox,.rlay .zone,.rlay .choices,.rlay .actions{order:0}
+  .rlay .zone{width:100%;min-height:13rem}
+  .rlay .choices{margin-top:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:.9rem;grid-auto-rows:calc((var(--vh) - 11.5rem) / 2)}
+  .rlay .pchip{aspect-ratio:auto}
+
+  .blay{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.4rem;align-items:start}
+  .blay .tray{margin-top:0;align-content:flex-start;gap:.9rem;padding:1.2rem}
+  .blay .chip{font-size:2.2rem;padding:.4rem 1.3rem}
+  .blay .actions{margin-top:1.2rem}
+  .blay .scene{padding:1.2rem .8rem}
+  .blay .scene .pic{width:12rem}
+  .blay .scene .kid{height:9rem}
+  .blay .frame{font-size:2.7rem;margin:1.6rem 0 .4rem;gap:.6rem .8rem}
+  .blay .blank{min-width:9.5rem;min-height:1.6em}
+
+  .llay{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:1.2rem;align-items:start}
+  .llay .thumbs{width:calc(var(--vh) - 18.2rem);min-width:20rem}
+  .stage{grid-template-columns:minmax(0,12rem) 1fr;padding:.8rem;margin-bottom:0}
+  .stage .pic{max-width:12rem}
+  .bigword{font-size:3.4rem}
+  .line{gap:.3rem;padding-top:.5rem}
+  .line .sentence{font-size:2.3rem}
+  .rule-col{padding:.7rem}
+  .rule-s{font-size:2rem}
+  .rule-n{font-size:1.1rem}
+  .arts{font-size:1.4rem;margin:.6rem 0}
+  .llay .tword{font-size:1.4rem;overflow-wrap:normal}
+  .llay .thumb{padding:.4rem;gap:.2rem}
+}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-0.5rem)}75%{transform:translateX(0.5rem)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.07)}100%{transform:scale(1)}}
+.shake{animation:shake .32s}
+.pop{animation:pop .35s}
+@media (prefers-reduced-motion: reduce){.shake,.pop{animation:none}.slot,.zone,.blank{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>What are you wearing?</h1>
+    <div class="score" aria-label="Stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="star-fill" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg><span id="starCount">0</span></div>
+  <nav class="tabs" role="tablist" aria-label="Activities">
+    <button class="tab" role="tab" aria-selected="true" data-tab="learn" type="button">Learn</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="match" type="button">Match</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="read" type="button">Read</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="build" type="button">Build</button>
+  </nav>
+  </header>
+  <main id="play" role="tabpanel"></main>
+</div>
+
+<script>
+(function(){
+  var $ = function(s){ return document.querySelector(s); };
+  var play = $('#play');
+
+  /* ---------- pictures ---------- */
+  var S = 'stroke="#16264A" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"';
+  function svg(inner){ return '<svg class="art" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><g ' + S + '>' + inner + '</g></svg>'; }
+  function star(cx, cy, r, fill){
+    var p = [];
+    for (var k = 0; k < 10; k++){
+      var a = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * 0.45 : r;
+      p.push((cx + rr * Math.cos(a)).toFixed(1) + ',' + (cy + rr * Math.sin(a)).toFixed(1));
+    }
+    return '<polygon points="' + p.join(' ') + '" fill="' + fill + '" stroke="none"/>';
+  }
+  var ART = {
+    shirt: svg(
+      '<path d="M38 16 L18 28 L6 52 L26 62 L34 50 L34 106 L86 106 L86 50 L94 62 L114 52 L102 28 L82 16 Q60 32 38 16 Z" fill="#14B8A6"/>' +
+      '<path d="M38 16 Q60 32 82 16 L74 12 Q60 24 46 12 Z" fill="#0B8F83"/>' +
+      '<path d="M60 28 L60 106" fill="none" stroke-width="2"/>' +
+      '<circle cx="60" cy="46" r="3" fill="#fff" stroke-width="2"/><circle cx="60" cy="66" r="3" fill="#fff" stroke-width="2"/><circle cx="60" cy="86" r="3" fill="#fff" stroke-width="2"/>'
+    ),
+    dress: svg(
+      '<path d="M42 10 L50 10 L54 32 L66 32 L70 10 L78 10 L76 44 L102 108 Q60 120 18 108 L44 44 Z" fill="#EC4899"/>' +
+      '<path d="M44 44 L76 44 L77 54 L43 54 Z" fill="#BE2A78"/>' +
+      '<circle cx="46" cy="74" r="3.5" fill="#fff" stroke="none"/><circle cx="66" cy="70" r="3.5" fill="#fff" stroke="none"/><circle cx="56" cy="90" r="3.5" fill="#fff" stroke="none"/><circle cx="78" cy="92" r="3.5" fill="#fff" stroke="none"/><circle cx="36" cy="96" r="3.5" fill="#fff" stroke="none"/>'
+    ),
+    jeans: svg(
+      '<path d="M28 10 L92 10 L98 110 L66 110 L60 56 L54 110 L22 110 Z" fill="#2F5FA8"/>' +
+      '<path d="M28 10 L92 10 L92 22 L28 22 Z" fill="#244A85"/>' +
+      '<path d="M60 22 L60 56" fill="none" stroke-width="2.5"/>' +
+      '<path d="M32 28 Q40 42 52 30" fill="none" stroke="#FFC933" stroke-width="2.5" stroke-dasharray="4 3"/>' +
+      '<path d="M88 28 Q80 42 68 30" fill="none" stroke="#FFC933" stroke-width="2.5" stroke-dasharray="4 3"/>' +
+      '<rect x="55" y="12" width="10" height="8" rx="2" fill="#FFC933" stroke-width="2"/>'
+    ),
+    trainers: svg(
+      '<path d="M12 90 L12 76 Q12 72 18 72 Q34 70 36 54 L38 44 Q40 40 46 42 L58 46 Q62 56 70 62 Q78 68 98 72 Q116 76 116 90 Z" fill="#FF6B5B"/>' +
+      '<path d="M8 90 L116 90 L116 100 Q116 106 108 106 L16 106 Q8 106 8 98 Z" fill="#fff"/>' +
+      '<path d="M52 56 L62 52 M58 62 L68 58 M66 68 L76 64" fill="none" stroke="#fff" stroke-width="4"/>' +
+      '<path d="M20 82 Q60 86 108 82" fill="none" stroke="#fff" stroke-width="4"/>'
+    ),
+    scarf: svg(
+      '<path d="M52 52 L78 48 L86 108 L58 112 Z" fill="#2FB36D"/>' +
+      '<polygon points="54.2,70 80.9,70 82,78 55.6,78" fill="#FFC933" stroke="none"/>' +
+      '<polygon points="56,92 83.9,92 84.9,100 56.8,100" fill="#FFC933" stroke="none"/>' +
+      '<path d="M22 46 L48 50 L44 92 L20 86 Z" fill="#1F9D5B"/>' +
+      '<path d="M18 22 Q60 52 102 22 L102 40 Q60 70 18 40 Z" fill="#2FB36D"/>' +
+      '<path d="M60 112 L60 118 M68 111 L68 117 M76 110 L76 116 M84 109 L84 115" fill="none"/>'
+    ),
+    hat: svg(
+      '<ellipse cx="60" cy="70" rx="50" ry="15" fill="#F5A623"/>' +
+      '<path d="M34 68 Q34 22 60 22 Q86 22 86 68 Q60 78 34 68 Z" fill="#FFC933"/>' +
+      '<path d="M34.5 56 Q60 66 85.5 56 L86 68 Q60 78 34 68 Z" fill="#E5484D"/>'
+    ),
+    sandals: svg(
+      '<path d="M32 14 Q46 12 50 30 Q54 62 48 96 Q44 112 32 110 Q18 108 18 90 Q18 36 32 14 Z" fill="#F5A623"/>' +
+      '<path d="M20 54 Q34 44 50 56 L49 68 Q34 56 21 68 Z" fill="#2E6BFF"/>' +
+      '<circle cx="34" cy="30" r="4.5" fill="#FFC933"/>' +
+      '<g transform="translate(52 0)"><path d="M32 14 Q46 12 50 30 Q54 62 48 96 Q44 112 32 110 Q18 108 18 90 Q18 36 32 14 Z" fill="#F5A623"/>' +
+      '<path d="M20 54 Q34 44 50 56 L49 68 Q34 56 21 68 Z" fill="#2E6BFF"/>' +
+      '<circle cx="34" cy="30" r="4.5" fill="#FFC933"/></g>'
+    ),
+    pyjamas: svg(
+      '<g transform="translate(10 0)">' +
+      '<path d="M26 64 L74 64 L78 112 L54 112 L50 84 L46 112 L22 112 Z" fill="#7C4DE8"/>' +
+      '<path d="M34 8 L20 14 L8 44 L22 50 L28 34 L28 60 L72 60 L72 34 L78 50 L92 44 L80 14 L66 8 Q50 22 34 8 Z" fill="#8B5CF6"/>' +
+      star(40, 36, 6, '#FFC933') + star(60, 46, 5, '#FFC933') + star(52, 26, 4, '#FFC933') +
+      star(36, 88, 5, '#FFC933') + star(62, 96, 5, '#FFC933') + '</g>'
+    ),
+    cap: svg(
+      '<path d="M14 78 Q14 26 58 26 Q96 26 98 74 Q56 84 14 78 Z" fill="#3B82F6"/>' +
+      '<path d="M58 28 Q44 52 46 80" fill="none" stroke-width="2.5"/>' +
+      '<circle cx="58" cy="27" r="5" fill="#1D4ED8"/>' +
+      '<path d="M70 74 Q104 64 116 78 Q112 88 76 84 Z" fill="#1D4ED8"/>'
+    )
+  };
+  var KIDS = [['#F2C9A0','#4A2F1B','#FF6B5B'], ['#C68642','#1B1B1B','#2E6BFF'], ['#8D5524','#2B1B12','#FFB800']];
+  function kid(k){
+    var c = KIDS[k % 3];
+    return '<svg class="kid" viewBox="0 0 60 92" aria-hidden="true" focusable="false"><g ' + S + '>' +
+      '<rect x="18" y="74" width="9" height="15" rx="3" fill="#16264A"/><rect x="33" y="74" width="9" height="15" rx="3" fill="#16264A"/>' +
+      '<rect x="11" y="44" width="38" height="36" rx="12" fill="' + c[2] + '"/>' +
+      '<circle cx="30" cy="26" r="18" fill="' + c[0] + '"/>' +
+      '<path d="M12 24 Q14 6 30 6 Q46 6 48 24 Q38 14 12 24 Z" fill="' + c[1] + '"/>' +
+      '<circle cx="23.5" cy="28" r="2.4" fill="#16264A" stroke="none"/><circle cx="36.5" cy="28" r="2.4" fill="#16264A" stroke="none"/>' +
+      '<path d="M24 35 Q30 40 36 35" fill="none" stroke-width="2.5"/></g></svg>';
+  }
+  var ICON_SPK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor" stroke="none"/><path d="M15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var ICON_STAR = '<svg class="bs %c" viewBox="0 0 24 24" aria-hidden="true"><path class="star-fill" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+  var ICON_ARROW = '<svg class="arrow" viewBox="0 0 48 24" aria-hidden="true"><path d="M3 12h36M30 4l10 8-10 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  /* ---------- words ---------- */
+  var ITEMS = [
+    {id:'shirt', word:'shirt', plural:false},
+    {id:'dress', word:'dress', plural:false},
+    {id:'jeans', word:'jeans', plural:true},
+    {id:'trainers', word:'trainers', plural:true},
+    {id:'scarf', word:'scarf', plural:false},
+    {id:'hat', word:'hat', plural:false},
+    {id:'sandals', word:'sandals', plural:true},
+    {id:'pyjamas', word:'pyjamas', plural:true},
+    {id:'cap', word:'baseball cap', plural:false}
+  ];
+  var byId = {};
+  ITEMS.forEach(function(i){ byId[i.id] = i; });
+  function pronText(p){ return p === 'you' ? "You're" : "They're"; }
+  function sentence(p, it){ return pronText(p) + ' wearing ' + (it.plural ? '' : 'a ') + it.word + '.'; }
+  function sentenceHTML(p, it){ return '<span class="pron">' + pronText(p) + '</span> wearing ' + (it.plural ? '' : 'a ') + '<span class="hl">' + it.word + '</span>.'; }
+  function shuffle(a){ for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function makeRounds(){ return shuffle(ITEMS.slice()).map(function(it){ return {it: it, pron: Math.random() < 0.5 ? 'you' : 'they'}; }); }
+
+  /* ---------- sound ---------- */
+  var ac;
+  function tone(freqs){
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      var t0 = ac.currentTime;
+      freqs.forEach(function(f, i){
+        var o = ac.createOscillator(), g = ac.createGain(), t = t0 + i * 0.11;
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+        o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.25);
+      });
+    } catch (e) {}
+  }
+  function good(){ tone([660, 880]); }
+  function bad(){ tone([200]); }
+  function win(){ tone([523, 659, 784, 1046]); }
+  function speak(t){
+    try {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(t);
+      u.lang = 'en-US'; u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  var stars = 0;
+  function addStar(){ stars++; $('#starCount').textContent = stars; }
+  function shake(el){ el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+  /* ---------- drag and drop (mouse, touch, pen; tap-then-tap also works) ---------- */
+  var selected = null;
+  function setSelected(el){
+    if (selected) selected.classList.remove('selected');
+    selected = (el && selected !== el) ? el : null;
+    if (selected) selected.classList.add('selected');
+  }
+  function targetAt(x, y){
+    var n = document.elementFromPoint(x, y);
+    return n && n.closest ? n.closest('[data-drop]:not(.filled)') : null;
+  }
+  function enableDrag(el, onDrop){
+    el.addEventListener('pointerdown', function(e){
+      if (e.button !== 0 || el.classList.contains('used')) return;
+      e.preventDefault();
+      var r = el.getBoundingClientRect();
+      var sx = e.clientX, sy = e.clientY, ox = sx - r.left, oy = sy - r.top;
+      var ghost = null, moved = false, over = null;
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+      function move(ev){
+        if (!moved && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 8){
+          moved = true;
+          ghost = el.cloneNode(true);
+          ghost.classList.add('ghost');
+          ghost.classList.remove('selected', 'dragging');
+          ghost.style.width = r.width + 'px'; ghost.style.height = r.height + 'px';
+          document.body.appendChild(ghost);
+          el.classList.add('dragging');
+        }
+        if (moved){
+          ghost.style.transform = 'translate(' + (ev.clientX - ox) + 'px,' + (ev.clientY - oy) + 'px) rotate(-3deg)';
+          var t = targetAt(ev.clientX, ev.clientY);
+          if (t !== over){ if (over) over.classList.remove('hot'); over = t; if (over) over.classList.add('hot'); }
+        }
+      }
+      function up(ev){
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        el.removeEventListener('pointercancel', up);
+        if (over) over.classList.remove('hot');
+        if (ghost) ghost.remove();
+        el.classList.remove('dragging');
+        if (moved){
+          var t = targetAt(ev.clientX, ev.clientY);
+          if (t && ev.type === 'pointerup') onDrop(el, t);
+        } else if (ev.type === 'pointerup'){
+          setSelected(el);
+        }
+      }
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    });
+    el.addEventListener('click', function(e){ if (e.detail === 0) setSelected(el); });
+  }
+  function wire(root, handler){
+    root.querySelectorAll('.chip,.pchip').forEach(function(c){
+      enableDrag(c, function(chip, t){ setSelected(null); handler(chip, t); });
+    });
+    root.querySelectorAll('[data-drop]').forEach(function(t){
+      t.addEventListener('click', function(){
+        if (selected){ var c = selected; setSelected(null); handler(c, t); }
+      });
+      t.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); t.click(); }
+      });
+    });
+  }
+  play.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-say]') : null;
+    if (b) speak(b.getAttribute('data-say'));
+  });
+
+  function dots(i){
+    var h = '<div class="dots" aria-label="Question ' + (i + 1) + ' of ' + ITEMS.length + '">';
+    for (var k = 0; k < ITEMS.length; k++) h += '<span class="dot ' + (k < i ? 'done' : (k === i ? 'cur' : '')) + '"></span>';
+    return h + '</div>';
+  }
+  function showDone(msg, again, n, append){
+    var stars3 = [0, 1, 2].map(function(k){ return ICON_STAR.replace('%c', k < n ? 'on' : ''); }).join('');
+    var html = '<div class="done" id="done"><div class="bigstars">' + stars3 + '</div><p class="donetxt">' + msg + '</p><button class="btn" id="again" type="button">Play again</button></div>';
+    if (append) play.insertAdjacentHTML('beforeend', html); else play.innerHTML = html;
+    win();
+    $('#again').addEventListener('click', again);
+    var d = $('#done'); if (d && d.scrollIntoView) d.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+  }
+
+  /* ---------- 1. Learn ---------- */
+  function startLearn(){
+    setSelected(null);
+    play.innerHTML =
+      '<div class="llay"><div class="lleft"><div class="rule">' +
+        '<div class="rule-col"><div class="kids">' + kid(0) + '</div><div><p class="rule-s"><span class="pron">You\'re</span> wearing a hat.</p><p class="rule-n">You\'re = you are. Talk to one friend.</p></div></div>' +
+        '<div class="rule-col"><div class="kids">' + kid(1) + kid(2) + '</div><div><p class="rule-s"><span class="pron">They\'re</span> wearing sandals.</p><p class="rule-n">They\'re = they are. Talk about two or more friends.</p></div></div>' +
+      '</div>' +
+      '<div class="arts"><span class="tag">a</span><span>a shirt · a dress · a hat · a scarf · a baseball cap</span><span class="tag no">no a</span><span>jeans · trainers · sandals · pyjamas</span></div>' +
+      '<div class="stage" id="stage"></div></div>' +
+      '<div class="grid3 thumbs" id="thumbs"></div></div>';
+    var thumbs = $('#thumbs');
+    ITEMS.forEach(function(it){
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'thumb'; b.dataset.id = it.id; b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<div class="pic">' + ART[it.id] + '</div><div class="tword">' + it.word + '</div>';
+      b.addEventListener('click', function(){ pick(it.id, true); });
+      thumbs.appendChild(b);
+    });
+    function pick(id, say){
+      var it = byId[id];
+      $('#stage').innerHTML =
+        '<div class="pic">' + ART[id] + '</div>' +
+        '<div class="lines"><p class="bigword">' + it.word + '</p>' +
+          '<div class="line"><p class="sentence">' + sentenceHTML('you', it) + '</p><button class="listen" type="button" data-say="' + sentence('you', it) + '">' + ICON_SPK + '<span>Listen</span></button></div>' +
+          '<div class="line"><p class="sentence">' + sentenceHTML('they', it) + '</p><button class="listen" type="button" data-say="' + sentence('they', it) + '">' + ICON_SPK + '<span>Listen</span></button></div>' +
+        '</div>';
+      thumbs.querySelectorAll('.thumb').forEach(function(t){ t.setAttribute('aria-pressed', t.dataset.id === id ? 'true' : 'false'); });
+      if (say) speak(it.word);
+    }
+    pick('shirt', false);
+  }
+
+  /* ---------- 2. Match: drag words to pictures ---------- */
+  function startMatch(){
+    setSelected(null);
+    var done = 0;
+    play.innerHTML = '<p class="hint">Drag each word to its picture.</p><div class="mlay"><div class="grid3" id="targets"></div><div class="tray" id="tray"></div></div>';
+    var tg = $('#targets'), tray = $('#tray');
+    shuffle(ITEMS.slice()).forEach(function(it){
+      var d = document.createElement('div');
+      d.className = 'slot'; d.dataset.drop = '1'; d.dataset.id = it.id; d.tabIndex = 0; d.setAttribute('role', 'button'); d.setAttribute('aria-label', 'Picture. Drop a word here.');
+      d.innerHTML = '<div class="pic">' + ART[it.id] + '</div><div class="slotword">?</div>';
+      tg.appendChild(d);
+    });
+    var st = document.createElement('p');
+    st.className = 'status'; st.id = 'status'; st.setAttribute('aria-live', 'polite'); st.textContent = '0 / ' + ITEMS.length;
+    tg.appendChild(st);
+    shuffle(ITEMS.slice()).forEach(function(it){
+      var c = document.createElement('button');
+      c.type = 'button'; c.className = 'chip'; c.dataset.id = it.id; c.textContent = it.word;
+      tray.appendChild(c);
+    });
+    wire(play, function(chip, t){
+      if (t.classList.contains('filled')) return;
+      if (chip.dataset.id === t.dataset.id){
+        var it = byId[t.dataset.id];
+        t.classList.add('filled', 'pop');
+        t.querySelector('.slotword').textContent = it.word;
+        chip.classList.add('used');
+        good(); speak(it.word); addStar();
+        done++;
+        $('#status').textContent = done + ' / ' + ITEMS.length;
+        if (done === ITEMS.length) setTimeout(function(){ showDone('All ' + ITEMS.length + ' matched. Great job!', startMatch, 3, true); }, 700);
+      } else {
+        shake(t); shake(chip); bad();
+      }
+    });
+  }
+
+  /* ---------- 3. Read: read the sentence, drag the picture ---------- */
+  function startRead(){
+    setSelected(null);
+    var rounds = makeRounds(), i = 0, score = 0, missed = false;
+    function show(){
+      var r = rounds[i], it = r.it;
+      missed = false;
+      var opts = shuffle([it].concat(shuffle(ITEMS.filter(function(x){ return x !== it; })).slice(0, 3)));
+      play.innerHTML =
+        dots(i) + '<p class="hint">Read the sentence. Drag the picture.</p>' +
+        '<div class="rlay"><div class="rleft"><div class="sbox"><p class="sentence">' + sentenceHTML(r.pron, it) + '</p>' +
+        '<button class="listen" type="button" data-say="' + sentence(r.pron, it) + '">' + ICON_SPK + '<span>Listen</span></button></div>' +
+        '<div class="zone" data-drop="1" data-id="' + it.id + '" id="zone" tabindex="0" role="button" aria-label="Drop the picture here"><span class="zhint">Drop the picture here</span></div>' +
+        '<div class="actions"><button class="btn" id="next" type="button" hidden>' + (i === ITEMS.length - 1 ? 'Finish' : 'Next') + '</button></div></div>' +
+        '<div class="choices" id="choices">' + opts.map(function(o){ return '<button type="button" class="pchip" data-id="' + o.id + '" aria-label="' + o.word + '">' + ART[o.id] + '</button>'; }).join('') + '</div></div>';
+      wire(play, function(chip, t){
+        if (t.classList.contains('filled')) return;
+        if (chip.dataset.id === t.dataset.id){
+          t.classList.add('filled', 'pop');
+          t.innerHTML = '<div class="pic">' + ART[it.id] + '</div><div class="slotword">' + it.word + '</div>';
+          chip.classList.add('used');
+          if (!missed) score++;
+          addStar(); good(); speak(sentence(r.pron, it));
+          $('#next').hidden = false;
+        } else { missed = true; shake(t); shake(chip); bad(); }
+      });
+      $('#next').addEventListener('click', function(){
+        i++;
+        if (i < ITEMS.length) show();
+        else showDone('You read ' + score + ' out of ' + ITEMS.length + ' on the first try!', startRead, score >= 8 ? 3 : (score >= 5 ? 2 : 1), false);
+      });
+    }
+    show();
+  }
+
+  /* ---------- 4. Build: complete the sentence ---------- */
+  function startBuild(){
+    setSelected(null);
+    var rounds = makeRounds(), i = 0, score = 0, missed = false, filled = 0;
+    function show(){
+      var r = rounds[i], it = r.it;
+      missed = false; filled = 0;
+      var people = r.pron === 'you' ? kid(0) : kid(1) + kid(2);
+      var words = shuffle([it].concat(shuffle(ITEMS.filter(function(x){ return x !== it; })).slice(0, 3)));
+      play.innerHTML =
+        dots(i) + '<p class="hint">Look. Then build the sentence.</p>' +
+        '<div class="blay"><div class="bleft"><div class="scene"><div class="people"><div class="kids">' + people + '</div><p class="who">' + (r.pron === 'you' ? 'Talk to this friend.' : 'Talk about these friends.') + '</p></div>' + ICON_ARROW + '<div class="pic">' + ART[it.id] + '</div></div>' +
+        '<div class="frame" id="frame">' +
+          '<div class="blank" data-drop="1" data-kind="pron" tabindex="0" role="button" aria-label="Drop You\'re or They\'re here">&nbsp;</div>' +
+          '<span class="w">wearing</span>' + (it.plural ? '' : '<span class="w">a</span>') +
+          '<div class="blank" data-drop="1" data-kind="word" tabindex="0" role="button" aria-label="Drop the clothes word here">&nbsp;</div><span class="w">.</span>' +
+        '</div>' +
+        '</div><div class="bright"><div class="tray">' +
+          '<button type="button" class="chip pr" data-kind="pron" data-val="you">You\'re</button>' +
+          '<button type="button" class="chip pr" data-kind="pron" data-val="they">They\'re</button>' +
+          '<span class="sep"></span>' +
+          words.map(function(o){ return '<button type="button" class="chip" data-kind="word" data-val="' + o.id + '">' + o.word + '</button>'; }).join('') +
+        '</div>' +
+        '<div class="actions"><button class="listen" id="say" type="button" data-say="' + sentence(r.pron, it) + '" hidden>' + ICON_SPK + '<span>Listen</span></button>&nbsp;&nbsp;<button class="btn" id="next" type="button" hidden>' + (i === ITEMS.length - 1 ? 'Finish' : 'Next') + '</button></div></div></div>';
+      wire(play, function(chip, t){
+        if (t.classList.contains('filled')) return;
+        var expect = t.dataset.kind === 'pron' ? r.pron : it.id;
+        if (chip.dataset.kind === t.dataset.kind && chip.dataset.val === expect){
+          t.classList.add('filled', 'pop');
+          t.textContent = chip.textContent;
+          chip.classList.add('used');
+          good(); filled++;
+          if (filled === 2){
+            if (!missed) score++;
+            addStar(); speak(sentence(r.pron, it));
+            $('#next').hidden = false; $('#say').hidden = false;
+          }
+        } else { missed = true; shake(t); shake(chip); bad(); }
+      });
+      $('#next').addEventListener('click', function(){
+        i++;
+        if (i < ITEMS.length) show();
+        else showDone('You built ' + score + ' out of ' + ITEMS.length + ' on the first try!', startBuild, score >= 8 ? 3 : (score >= 5 ? 2 : 1), false);
+      });
+    }
+    show();
+  }
+
+  /* ---------- tabs ---------- */
+  var starters = {learn: startLearn, match: startMatch, read: startRead, build: startBuild};
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      tabs.forEach(function(o){ o.setAttribute('aria-selected', o === t ? 'true' : 'false'); });
+      try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch (e) {}
+      starters[t.dataset.tab]();
+    });
+  });
+  startLearn();
+})();
+</script>
+
+</body>
+</html>
